@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: 'reactive-cloud-stream-sample'
+  cloud:
+    stream:
+      binders:
+        kafka:
+          type: 'kafka'
+      kafka:
+        binder:
+          brokers: 'localhost:19092'
+          health-timeout: 30
+          auto-create-topics: true
+          auto-add-partitions: true
+          producer-properties:
+            client.id: '${spring.application.name}'
+        bindings:
+          payment-input:
+            consumer:
+              auto-commit-offset: true
+          payment-output:
+            producer:
+              configuration:
+                acks: 'all'
+                retries: 2147483647
+                max.in.flight.requests.per.connection: 1
+      bindings:
+        payment-input:
+          group: '${spring.application.name}'
+          binder: 'kafka'
+          destination: 'streaming.payments.created'
+          producer:
+            partition-count: 4
+          consumer:
+            max-attempts: 5
+            partitioned: true
+            concurrency: 2
+        payment-output:
+          binder: 'kafka'
+          destination: 'streaming.payments.created'
+          producer:
+            partition-count: 4
+  data:
+    mongodb:
+      host: 'localhost'
+      port: 27017
+      username: 'root'
+      password: 'root'
+      authentication-database: 'admin'
+  jackson:
+    serialization.write-dates-as-timestamps: false
+
+logging:
+  level:
+    org.springframework.cloud.sleuth: debug
+
+reactive-cloud-stream-sample:
+  partner-base-url: 'http://5d25f03beeb36400145c57b0.mockapi.io'

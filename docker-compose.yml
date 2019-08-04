@@ -1,0 +1,47 @@
+version: '3'
+services:
+  mongo:
+    image: mongo
+    container_name: reactive-cloud-stream-sample.mongo
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: 'root'
+      MONGO_INITDB_ROOT_PASSWORD: 'root'
+      MONGO_INITDB_DATABASE: 'reactive-cloud-stream-sample'
+  zookeeper:
+    container_name: reactive-cloud-stream-sample.zookeeper
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 22181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_SERVERS: localhost:22888:23888
+    network_mode: host
+    extra_hosts:
+      - 'localhost:127.0.0.1'
+  kafka_broker:
+    container_name: reactive-cloud-stream-sample.kafka_broker
+    image: confluentinc/cp-kafka:latest
+    network_mode: host
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 127.0.0.1:22181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:19092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  kafka_manager:
+    container_name: reactive-cloud-stream-sample.kafka_manager
+    image: hlebalbau/kafka-manager
+    network_mode: host
+    depends_on:
+      - kafka_broker
+    ports:
+      - '9000:9000'
+    environment:
+      ZK_HOSTS: 127.0.0.1:22181
+      APPLICATION_SECRET: '12345'
+    command: -Dpidfile.path=/dev/null
